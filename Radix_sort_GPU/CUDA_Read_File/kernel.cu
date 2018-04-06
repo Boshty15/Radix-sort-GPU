@@ -16,6 +16,7 @@ __device__ unsigned int device_data[SIZE];
 
 __global__ void	ParalelRadixSort()
 {
+	//sprememba
 	__shared__ volatile unsigned int shared_data[SIZE * 2];
 
 	shared_data[threadIdx.x] = device_data[threadIdx.x];
