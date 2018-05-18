@@ -14,6 +14,7 @@ using namespace std;
 
 __device__ unsigned int device_data[SIZE];
 
+//Test v gpu in nazaj
 __global__ void gpucopy(int* src, int* dst)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;;
