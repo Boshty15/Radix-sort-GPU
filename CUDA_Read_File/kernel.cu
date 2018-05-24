@@ -14,11 +14,14 @@ void __syncthreads();
 #include <fstream>
 #include <vector>
 #include <bitset>
+#include <time.h>
+#include <chrono>
 
 //#define SIZE 32
 //#define BIT 32
 //
 using namespace std;
+using namespace chrono;
 //
 //__device__ unsigned int device_data[SIZE];
 //__device__ int ddata_s[SIZE];
@@ -98,10 +101,10 @@ vector<unsigned int> ReadFile(string filepath) {
 	while (inputFile >> value) {
 		vector.push_back(value * 100);
 	}
-	for each (unsigned int var in vector)
+	/*for each (unsigned int var in vector)
 	{
 		cout << var << " " << endl;
-	}
+	}*/
 	inputFile.close();
 	return vector;
 }
@@ -234,10 +237,66 @@ vector<unsigned int> ReadFile(string filepath) {
 
 
 
-#define SIZE 32
+#define SIZE 100
 #define LOOPS 1
 #define UPPER_BIT 31
 #define LOWER_BIT 0
+int getMax(unsigned int* arr, int n)
+{
+	int mx = arr[0];
+	for (int i = 1; i < n; i++)
+		if (arr[i] > mx)
+			mx = arr[i];
+	return mx;
+}
+
+// A function to do counting sort of arr[] according to
+// the digit represented by exp.
+void countSort(unsigned int* arr, int n, int exp)
+{
+// output array
+	vector<unsigned int> ve(n);
+	unsigned int* output = ve.data();
+	int i, count[10] = { 0 };
+
+	// Store count of occurrences in count[]
+	for (i = 0; i < n; i++)
+		count[(arr[i] / exp) % 10]++;
+
+	// Change count[i] so that count[i] now contains actual
+	//  position of this digit in output[]
+	for (i = 1; i < 10; i++)
+		count[i] += count[i - 1];
+
+	// Build the output array
+	for (i = n - 1; i >= 0; i--)
+	{
+		output[count[(arr[i] / exp) % 10] - 1] = arr[i];
+		count[(arr[i] / exp) % 10]--;
+	}
+
+	// Copy the output array to arr[], so that arr[] now
+	// contains sorted numbers according to current digit
+	for (i = 0; i < n; i++)
+		arr[i] = output[i];
+}
+
+// The main function to that sorts arr[] of size n using 
+// Radix Sort
+void serialRadixSort(unsigned int* arr, int n)
+{
+	// Find the maximum number to know number of digits
+	int m = getMax(arr, n);
+
+	// Do counting sort for every digit. Note that instead
+	// of passing digit number, exp is passed. exp is 10^i
+	// where i is current digit number
+	for (int exp = 1; m / exp > 0; exp *= 10)
+		countSort(arr, n, exp);
+}
+
+// A utility function to print an array
+
 
 __device__ unsigned int device_data[SIZE];
 
@@ -280,12 +339,21 @@ __global__ void radixSort() {
 	
 
 }
+void print(unsigned int* arr, int n)
+{
+	for (int i = 0; i < n; i++)
+		cout << (double)arr[i] / 100 << endl;
+}
 
 int main(int argc, char * argv[]) {
 
-	int blockSize = 32;
+	int blockSize = 128;
 	int numBlocks = (SIZE + blockSize - 1) / blockSize;
 
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	float totalTime = 0;
 
 	std::ifstream fin(argv[1]);
 	std::vector<unsigned int> host_double(SIZE);
@@ -302,6 +370,27 @@ int main(int argc, char * argv[]) {
 		//WriteFile(host_double);
 	}
 	int size = host_double.size();
+
+	//unsigned int* da = host_double.data();
+	////int arr[] = { 170, 45, 75, 90, 802, 24, 2, 66, 170, 45, 75, 90, 802, 24, 2, 66 };
+	//int n = sizeof(host_double) / sizeof(host_double[0]);
+	//auto t1 = high_resolution_clock::now();
+	//serialRadixSort(da, size);
+	//auto t2 = high_resolution_clock::now();
+	//auto diff = duration_cast<duration<double>>(t2 - t1);
+	//// now elapsed time, in seconds, as a double can be found in diff.count()
+	//long ms = (long)(1000 * diff.count());
+	//cout << endl << "Serial radix sort " << endl;
+	////print(da, size);
+	//for (int i = 0; i < size - 1; i++) {
+	//		if (host_double[i] > host_double[i + 1]) {
+	//			printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, host_double[i], i + 1, host_double[i + 1]);
+	//			return 1; 
+	//		}
+	//	}
+	//cout << "Total time: " << ms << "ms" << endl;
+	//cout << "Success" << endl;
+
 	std::copy(host_double.begin(), host_double.end(), host_data);
 
 	for (int lcount = 0; lcount < LOOPS; lcount++) {
