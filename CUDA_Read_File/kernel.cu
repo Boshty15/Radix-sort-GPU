@@ -345,6 +345,13 @@ void print(unsigned int* arr, int n)
 		cout << (double)arr[i] / 100 << endl;
 }
 
+void menu() {
+	cout << "Izberi: " << endl;
+	cout << "0 Exit " << endl;
+	cout << " 1 Serial sort" << endl;
+	cout << " 2 Parrallel sort" << endl;
+}
+
 int main(int argc, char * argv[]) {
 
 	int blockSize = 128;
@@ -371,45 +378,64 @@ int main(int argc, char * argv[]) {
 	}
 	int size = host_double.size();
 
-	//unsigned int* da = host_double.data();
-	////int arr[] = { 170, 45, 75, 90, 802, 24, 2, 66, 170, 45, 75, 90, 802, 24, 2, 66 };
-	//int n = sizeof(host_double) / sizeof(host_double[0]);
-	//auto t1 = high_resolution_clock::now();
-	//serialRadixSort(da, size);
-	//auto t2 = high_resolution_clock::now();
-	//auto diff = duration_cast<duration<double>>(t2 - t1);
-	//// now elapsed time, in seconds, as a double can be found in diff.count()
-	//long ms = (long)(1000 * diff.count());
-	//cout << endl << "Serial radix sort " << endl;
-	////print(da, size);
-	//for (int i = 0; i < size - 1; i++) {
-	//		if (host_double[i] > host_double[i + 1]) {
-	//			printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, host_double[i], i + 1, host_double[i + 1]);
-	//			return 1; 
-	//		}
-	//	}
-	//cout << "Total time: " << ms << "ms" << endl;
-	//cout << "Success" << endl;
+	int izbiraAlg;
+	menu();
+	cin >> izbiraAlg;
+	if (izbiraAlg == 0) {
 
-	std::copy(host_double.begin(), host_double.end(), host_data);
-
-	for (int lcount = 0; lcount < LOOPS; lcount++) {
-		unsigned int range = 1U << UPPER_BIT;
-		//for (int i = 0; i < SIZE; i++) host_data[i] = rand() % range;
-		cudaMemcpyToSymbol(device_data, host_data, SIZE *  sizeof(unsigned int));
-		radixSort << <numBlocks,blockSize >> >();
-		cudaMemcpyFromSymbol(host_data, device_data, SIZE * sizeof(unsigned int));
-	/*for (int i = 0; i < SIZE - 1; i++) {
-			if (host_data[i] > host_data[i + 1]) { 
-				printf("sort error at loop %d, hdata[%d] = %d, hdata[%d] = %d\n", lcount, i, host_data[i], i + 1, host_data[i + 1]);
-				return 1; 
+	}else if (izbiraAlg == 1) {
+		unsigned int* da = host_double.data();
+		//int arr[] = { 170, 45, 75, 90, 802, 24, 2, 66, 170, 45, 75, 90, 802, 24, 2, 66 };
+		int n = sizeof(host_double) / sizeof(host_double[0]);
+		//auto t1 = high_resolution_clock::now();
+		high_resolution_clock::time_point t1 = high_resolution_clock::now();
+		serialRadixSort(da, size);
+		high_resolution_clock::time_point t2 = high_resolution_clock::now();
+		auto duration = duration_cast <milliseconds> (t2 - t1).count();
+		//auto t2 = high_resolution_clock::now();
+		//auto diff = duration_cast<duration<double>>(t2 - t1);
+		// now elapsed time, in seconds, as a double can be found in diff.count()
+		//long ms = (long)(1000 * diff.count());
+		cout << endl << "Serial radix sort " << endl;
+		//print(da, size);
+		for (int i = 0; i < size - 1; i++) {
+			if (host_double[i] > host_double[i + 1]) {
+				printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, host_double[i], i + 1, host_double[i + 1]);
+				return 1;
 			}
-		}*/
-		printf("sorted data:\n");
-		for (int i = 0; i < size; i++) {
-			cout << (double)host_data[i] / 100 << endl;
 		}
+		cout << "Total time: " << duration << "ms" << endl;
+		cout << "Success" << endl;
+
 	}
-	printf("Success!\n");
+	else {
+		cout << "Parrallel sort " << endl;
+		std::copy(host_double.begin(), host_double.end(), host_data);
+
+		for (int lcount = 0; lcount < LOOPS; lcount++) {
+			unsigned int range = 1U << UPPER_BIT;
+			//for (int i = 0; i < SIZE; i++) host_data[i] = rand() % range;
+			cudaMemcpyToSymbol(device_data, host_data, SIZE * sizeof(unsigned int));
+			high_resolution_clock::time_point start = high_resolution_clock::now();
+			radixSort << <numBlocks, blockSize >> >();
+			high_resolution_clock::time_point stop = high_resolution_clock::now();
+			cudaMemcpyFromSymbol(host_data, device_data, SIZE * sizeof(unsigned int));
+			auto durationParralel = duration_cast <milliseconds> (start - stop).count();
+			/*for (int i = 0; i < SIZE - 1; i++) {
+			if (host_data[i] > host_data[i + 1]) {
+			printf("sort error at loop %d, hdata[%d] = %d, hdata[%d] = %d\n", lcount, i, host_data[i], i + 1, host_data[i + 1]);
+			return 1;
+			}
+			}*/
+			cout << " Sorted data: " << endl;
+			for (int i = 0; i < size; i++) {
+				cout << (double)host_data[i] / 100 << endl;
+			}
+			cout << " Time parralel sort: " << durationParralel << endl;
+		}
+		
+	}
+	
+	
 	return 0;
 }
