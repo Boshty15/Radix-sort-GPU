@@ -1,11 +1,21 @@
-#pragma once
-#ifdef __INTELLISENSE__
-void __syncthreads();
-#endif
+//#pragma once
+//#ifdef __INTELLISENSE__
+//void __syncthreads();
+//#endif
+
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include <device_functions.h>
+
+#ifndef __CUDACC_RTC__ 
+#define __CUDACC_RTC__
+#endif
+#pragma once
+#ifdef __INTELLISENSE__
+void __syncthreads();
+
+#endif
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <stdio.h>
@@ -16,6 +26,8 @@ void __syncthreads();
 #include <bitset>
 #include <time.h>
 #include <chrono>
+#include "device_functions.h"
+
 
 //#define SIZE 32
 //#define BIT 32
@@ -40,47 +52,47 @@ using namespace chrono;
 //		
 //}
 //
-//__global__ void radixSort(int* sort_tmp, const int num_lists, const int num_element, int* sort_tmp_1) {
-//	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-//	int stride = blockDim.x * gridDim.x;
-//	//printf("\n%d num list: %d" ,tid, num_lists );
-//	//printf("\n num element: %d" , num_element);
-//	if (sort_tmp == NULL) {
-//		printf("\nsort_tmp is null");
-//	}
-//	
-//	
-//	//for (int bit = 0; bit < BIT; bit++) {
-//		int base_cnt_0 = 0, base_cnt_1 = 0;
-//		//printf("\ntest1 + %d",tid );
-//		for (int i = tid; i < num_element; i+=stride) {
-//			int elem = sort_tmp[i];
-//			const int bit_mask = (1 << i);
-//			//printf("\ntest %d + %d bit %d",tid, elem, bit_mask);
-//			if ((elem & bit_mask) > 0) {
-//				sort_tmp_1[base_cnt_1] = elem;
-//				base_cnt_1 += num_lists;
-//				//printf("\n element 1 %d = %d",i, elem);
-//			}
-//			else {
-//				sort_tmp[base_cnt_0] = elem;
-//				base_cnt_0+=num_lists;
-//				//printf("\n element 0 %d = %d",i, elem);
-//			}
-//		}
-//		//copy data back to source - first the zero list
-//		for (int i = 0; i < base_cnt_1; i += num_lists) {
-//			sort_tmp[base_cnt_0 + i + tid] = sort_tmp_1[i + tid];
-//			//printf("\nsort tmp: %d", sort_tmp_0[i + tid]);
-//		}
-//	//}
-//	
-//	__syncthreads();
-//
-//	for (int i = 0; i < num_element; i++) {
-//		printf("\n%d", sort_tmp[i]);
-//	}
-//}
+__global__ void radixSort(int* sort_tmp, const int num_lists, const int num_element, int* sort_tmp_1) {
+	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int stride = blockDim.x * gridDim.x;
+	//printf("\n%d num list: %d" ,tid, num_lists );
+	//printf("\n num element: %d" , num_element);
+	if (sort_tmp == NULL) {
+		printf("\nsort_tmp is null");
+	}
+	
+	
+	//for (int bit = 0; bit < BIT; bit++) {
+		int base_cnt_0 = 0, base_cnt_1 = 0;
+		//printf("\ntest1 + %d",tid );
+		for (int i = tid; i < num_element; i+=stride) {
+			int elem = sort_tmp[i];
+			const int bit_mask = (1 << i);
+			//printf("\ntest %d + %d bit %d",tid, elem, bit_mask);
+			if ((elem & bit_mask) > 0) {
+				sort_tmp_1[base_cnt_1] = elem;
+				base_cnt_1 += num_lists;
+				//printf("\n element 1 %d = %d",i, elem);
+			}
+			else {
+				sort_tmp[base_cnt_0] = elem;
+				base_cnt_0+=num_lists;
+				//printf("\n element 0 %d = %d",i, elem);
+			}
+		}
+		//copy data back to source - first the zero list
+		for (int i = 0; i < base_cnt_1; i += num_lists) {
+			sort_tmp[base_cnt_0 + i + tid] = sort_tmp_1[i + tid];
+			//printf("\nsort tmp: %d", sort_tmp_0[i + tid]);
+		}
+	//}
+	
+	__syncthreads();
+
+	for (int i = 0; i < num_element; i++) {
+		printf("\n%d", sort_tmp[i]);
+	}
+}
 //
 //
 //void WriteFile(vector<double> vector) {
@@ -237,7 +249,7 @@ vector<unsigned int> ReadFile(string filepath) {
 
 
 
-#define SIZE 100
+#define SIZE 32
 #define LOOPS 1
 #define UPPER_BIT 31
 #define LOWER_BIT 0
@@ -317,25 +329,28 @@ __global__ void radixSort() {
 	for (int i = LOWER_BIT; i <= UPPER_BIT; i++) {
 		/*unsigned int mydata = shared_data[((SIZE - 1) - tid) + offset];*/
 		unsigned int mydata = shared_data[((SIZE - 1) - tid) + offset];
+		//unsigned int mydata = shared_data[((SIZE - 1) - tid)];
 		unsigned int mybit = mydata&bitmask;
 		// get population of ones and zeroes (cc 2.0 ballot)
 		unsigned int ones = __ballot(mybit); // cc 2.0
 		unsigned int zeroes = ~ones;
-		offset ^= SIZE; // switch ping-pong buffers
+		//offset ^= SIZE; // switch ping-pong buffers
 						 // do zeroes, then ones
 		if (!mybit) // threads with a zero bit
 					// get my position in ping-pong buffer
-			mypos = __popc(zeroes&thrmask);
+			mypos =		__popcll(zeroes&thrmask);
 		else        // threads with a one bit
 					// get my position in ping-pong buffer
-			mypos = __popc(zeroes) + __popc(ones&thrmask);
+			mypos = __popcll(zeroes) + __popcll(ones&thrmask);
 		// move to buffer  (or use shfl for cc 3.0)
 		shared_data[mypos - 1 + offset] = mydata;
+		//shared_data[mypos - 1] = mydata;
 		// repeat for next bit
 		bitmask <<= 1;
 	}
 	// save results to global
 	device_data[tid] = shared_data[tid + offset];
+	//device_data[tid] = shared_data[tid];
 	
 
 }
@@ -354,7 +369,7 @@ void menu() {
 
 int main(int argc, char * argv[]) {
 
-	int blockSize = 128;
+	int blockSize = 32;
 	int numBlocks = (SIZE + blockSize - 1) / blockSize;
 
 	cudaEvent_t start, stop;
@@ -384,6 +399,9 @@ int main(int argc, char * argv[]) {
 	if (izbiraAlg == 0) {
 
 	}else if (izbiraAlg == 1) {
+
+		//Serial radix sort
+
 		unsigned int* da = host_double.data();
 		//int arr[] = { 170, 45, 75, 90, 802, 24, 2, 66, 170, 45, 75, 90, 802, 24, 2, 66 };
 		int n = sizeof(host_double) / sizeof(host_double[0]);
@@ -409,6 +427,9 @@ int main(int argc, char * argv[]) {
 
 	}
 	else {
+
+		//Parrallel radix sort
+
 		cout << "Parrallel sort " << endl;
 		std::copy(host_double.begin(), host_double.end(), host_data);
 
