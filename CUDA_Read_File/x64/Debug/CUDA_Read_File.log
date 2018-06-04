@@ -2,17 +2,19 @@
   Compiling CUDA source file kernel.cu...
   
   C:\Users\Bostjan\Documents\gitKreken\Radix-sort-GPU\CUDA_Read_File>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env --cl-version 2015 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -o x64\Debug\kernel.cu.obj "C:\Users\Bostjan\Documents\gitKreken\Radix-sort-GPU\CUDA_Read_File\kernel.cu" 
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(325): warning : function "__ballot"
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(394): warning : variable "n" was declared but never referenced
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(421): warning : variable "range" was declared but never referenced
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(368): warning : variable "totalTime" was declared but never referenced
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(394): warning : variable "n" was declared but never referenced
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(421): warning : variable "range" was declared but never referenced
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(368): warning : variable "totalTime" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(337): warning : variable "binaryNum" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(428): warning : variable "n" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(394): warning : variable "numBlocks" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(399): warning : variable "totalTime" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(337): warning : variable "binaryNum" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(428): warning : variable "n" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(394): warning : variable "numBlocks" was declared but never referenced
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(399): warning : variable "totalTime" was declared but never referenced
   kernel.cu
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(104): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(250): warning C4018: '>': signed/unsigned mismatch
-C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(384): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(206): warning C4018: '>': signed/unsigned mismatch
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(337): warning C4101: 'binaryNum': unreferenced local variable
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(378): warning C4244: 'argument': conversion from 'double' to '_ULonglong', possible loss of data
+C:/Users/Bostjan/Documents/gitKreken/Radix-sort-GPU/CUDA_Read_File/kernel.cu(415): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   CUDA_Read_File.vcxproj -> C:\Users\Bostjan\Documents\gitKreken\Radix-sort-GPU\x64\Debug\Radix_sort_GPU.exe
   CUDA_Read_File.vcxproj -> C:\Users\Bostjan\Documents\gitKreken\Radix-sort-GPU\x64\Debug\Radix_sort_GPU.pdb (Full PDB)
   copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1\bin\cudart*.dll" "C:\Users\Bostjan\Documents\gitKreken\Radix-sort-GPU\x64\Debug\"
