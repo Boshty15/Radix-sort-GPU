@@ -1,3 +1,6 @@
+
+
+
 //#pragma once
 //#ifdef __INTELLISENSE__
 //void __syncthreads();
@@ -7,14 +10,14 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#ifndef __CUDACC_RTC__ 
-#define __CUDACC_RTC__
-#endif
-#pragma once
-#ifdef __INTELLISENSE__
-void __syncthreads();
-
-#endif
+//#ifndef __CUDACC_RTC__ 
+//#define __CUDACC_RTC__
+//#endif
+//#pragma once
+//#ifdef __INTELLISENSE__
+//void __syncthreads();
+//
+//#endif
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -273,19 +276,20 @@ __global__ void radixSortParralel(unsigned int* sort_tmp, unsigned int* sort_tmp
 	
 
     for (int bit = 0; bit < BIT; bit++) {
+		const int bit_mask = (1 << bit);
 		int base_cnt_0 = 0, base_cnt_1 = 0;
 		//printf("\ntest1 + %d",tid );
-		for (int i = tid; i < num_element; i += stride) {
-			int elem = sort_tmp[i];
-			const int bit_mask = (1 << i);
+		for (int i = 0; i < num_element; i += num_lists) {
+			int elem = sort_tmp[i + tid];
+			
 			//printf("\ntest %d + %d bit %d",tid, elem, bit_mask);
 			if ((elem & bit_mask) > 0) {
-				sort_tmp_1[base_cnt_1] = elem;
+				sort_tmp_1[base_cnt_1 + tid] = elem;
 				base_cnt_1 += num_lists;
 				//printf("\n element 1 %d = %d",i, elem);
 			}
 			else {
-				sort_tmp[base_cnt_0] = elem;
+				sort_tmp[base_cnt_0 + tid] = elem;
 				base_cnt_0 += num_lists;
 				//printf("\n element 0 %d = %d",i, elem);
 			}
@@ -296,8 +300,8 @@ __global__ void radixSortParralel(unsigned int* sort_tmp, unsigned int* sort_tmp
 			//printf("\nsort tmp: %d", sort_tmp_0[i + tid]);
 		}
 	}
-
-	__syncthreads();
+	//cudaDeviceSynchronize();
+	//__syncthreads();
 
 	//for (int i = 0; i < num_element; i++) {
 	//	printf("\n%d", sort_tmp[i]);
@@ -330,43 +334,6 @@ void menu() {
 	cout << " 1 Serial sort" << endl;
 	cout << " 2 Parrallel sort" << endl;
 }
-// function to convert decimal to binary
-unsigned int decToBinary(int n)
-{
-	// array to store binary number
-	unsigned int binaryNum[32];
-	vector<int> binary;
-	
-
-	// counter for binary array
-	int i = 0;
-	while (n > 0) {
-
-	//	// storing remainder in binary array
-		binary.push_back(n % 2);
-		n = n / 2;
-		i++;
-	}
-	cout << "binary" << endl;
-	for (int i = 0; i < binary.size(); i++) {
-		cout <<  binary[i] << " ";
-	}
-	cout << endl;
-	//binary = { 1,1,0 };
-
-	int total = 0;
-	int multipicator = 1;
-	for (int i = 0; i < binary.size(); i++)
-	{
-	   total += binary[i] * multipicator;
-	   multipicator *= 10;
-	}
-	return total;
-
-	// printing binary array in reverse order
-	/*for (int j = i - 1; j >= 0; j--)
-		cout << binaryNum[j];*/
-}
 
 vector<unsigned int> ReadFile(string filepath) {
 	vector<unsigned int> vector;
@@ -375,10 +342,10 @@ vector<unsigned int> ReadFile(string filepath) {
 
 	//read the elements in the file into a vector  
 	while (inputFile >> value) {
-		bitset<32>tmp(value *100);
-		cout << tmp << " ";
-		vector.push_back((int)(tmp.to_ulong()));
-		cout << (int)(tmp.to_ulong()) << " "; // konvert nazaj to int
+		//bitset<32>tmp(value *100);
+		//cout << tmp << " ";
+		vector.push_back(value * 100);
+		//cout << (int)(tmp.to_ulong()) << " "; // konvert nazaj to int
 	}
 	/*for each (unsigned int var in vector)
 	{
@@ -453,7 +420,7 @@ int main(int argc, char * argv[]) {
 		cout << endl;
 		//unsigned int t = decToBinary(10);
 		//unsigned int tmp22;
-		/*bitset<32>tmp(6560);
+		/*bitset<32>tmp(65.55);
 		cout << tmp << endl;*/
 			
 		cout << "Parrallel sort " << endl;
@@ -461,28 +428,27 @@ int main(int argc, char * argv[]) {
 		cout << "Not sorted!" << endl;
 		print(host_data, size);
 
-		//unsigned int* ddata;
-		//unsigned int* ddata_tmp;
+		unsigned int* ddata;
+		unsigned int* ddata_tmp;
 		//
 
 		//for (int lcount = 0; lcount < LOOPS; lcount++) {
 		//	unsigned int range = 1U << UPPER_BIT;
 		//	//for (int i = 0; i < SIZE; i++) host_data[i] = rand() % range;
-		//	//cudaMemcpyToSymbol(device_data, host_data, SIZE * sizeof(unsigned int));
-		//	cudaMalloc((void**)&ddata_tmp, SIZE * sizeof(unsigned int));
-		//	cudaMalloc((void**)&ddata, SIZE * sizeof(unsigned int));
-		//	cudaMemcpy(ddata, host_data, SIZE * sizeof(unsigned int), cudaMemcpyHostToDevice);
-		//	
+			//cudaMemcpyToSymbol(device_data, host_data, SIZE * sizeof(unsigned int));
+			cudaMalloc((void**)&ddata_tmp, SIZE * sizeof(unsigned int));
+			cudaMalloc((void**)&ddata, SIZE * sizeof(unsigned int));
+			cudaMemcpy(ddata, host_data, SIZE * sizeof(unsigned int), cudaMemcpyHostToDevice);			
 
-		//	high_resolution_clock::time_point start = high_resolution_clock::now();
-		//	radixSort << <numBlocks, blockSize >> >(ddata, ddata_tmp);
-		//	//radixSort << <(numBlocks, blockSize) >> > (ddata, ddata_tmp);
-		//	high_resolution_clock::time_point stop = high_resolution_clock::now();
+			high_resolution_clock::time_point start = high_resolution_clock::now();
+			radixSortParralel << <1, 10 >> >(ddata, ddata_tmp);
+			//radixSort << <(numBlocks, blockSize) >> > (ddata, ddata_tmp);
+			high_resolution_clock::time_point stop = high_resolution_clock::now();
 
-		//	cudaMemcpy(host_data, ddata, SIZE * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+			cudaMemcpy(host_data, ddata, SIZE * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
-		//	//cudaMemcpyFromSymbol(host_data, device_data, SIZE * sizeof(unsigned int));
-		//	auto durationParralel = duration_cast <milliseconds> (start - stop).count();
+			//cudaMemcpyFromSymbol(host_data, device_data, SIZE * sizeof(unsigned int));
+			auto durationParralel = duration_cast <milliseconds> (start - stop).count();
 		//	/*for (int i = 0; i < SIZE - 1; i++) {
 		//	if (host_data[i] > host_data[i + 1]) {
 		//	printf("sort error at loop %d, hdata[%d] = %d, hdata[%d] = %d\n", lcount, i, host_data[i], i + 1, host_data[i + 1]);
@@ -495,6 +461,8 @@ int main(int argc, char * argv[]) {
 		//	}
 		//	cout << " Time parralel sort: " << durationParralel << endl;
 		//}
+			cout << endl << "Sorted" << endl;
+			print(host_data, size);
 		
 	}
 	
