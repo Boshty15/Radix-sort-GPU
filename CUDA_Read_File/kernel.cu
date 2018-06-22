@@ -1,10 +1,11 @@
 
 
 
-//#pragma once
-//#ifdef __INTELLISENSE__
-//void __syncthreads();
-//#endif
+#pragma once
+#ifdef __INTELLISENSE__
+void __syncthreads();
+#endif
+
 
 
 #include "cuda_runtime.h"
@@ -31,6 +32,14 @@
 #include <chrono>
 #include "device_functions.h"
 #include <math.h> 
+
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/generate.h>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+#include <algorithm>
+#include <cstdlib>
 
 
 //#define SIZE 32
@@ -262,12 +271,12 @@ void serialRadixSort(unsigned int* arr, int n)
 __device__ unsigned int device_data[SIZE];
 
 // naive warp-level bitwise radix sort
-__global__ void radixSortParralel(unsigned int* sort_tmp, unsigned int* sort_tmp_1) {
-	const int num_lists = SIZE;
-	const int num_element = 10;
+__device__ void radixSortParralel(unsigned int* sort_tmp, const int num_lists, const int num_element, const int tid, unsigned int* sort_tmp_1) {
+	/*const int num_lists = SIZE;
+	const int num_element = 10;*/
 
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int stride = blockDim.x * gridDim.x;   
+	/*int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;   */
 	//printf("\n%d num list: %d" ,tid, num_lists );
 	//printf("\n num element: %d" , num_element);
 	if (sort_tmp == NULL) {
@@ -301,27 +310,154 @@ __global__ void radixSortParralel(unsigned int* sort_tmp, unsigned int* sort_tmp
 		}
 	}
 	//cudaDeviceSynchronize();
-	//__syncthreads();
+	__syncthreads();
 
 	//for (int i = 0; i < num_element; i++) {
 	//	printf("\n%d", sort_tmp[i]);
 	//}
 }
-
-__global__ void radixSort(unsigned int* data, unsigned int* data_tmp) {
-	//__shared__ volatile unsigned int shared_data[SIZE * 2];
-	// load from global into shared variable
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-
-	while (tid < SIZE) {
-		//data[tid] = data[tid] + 1000;
-
-
-
-		tid += blockDim.x * gridDim.x;
+int find_min(unsigned int * const src_array,
+	int * const list_indexes,
+	const int num_lists,
+	const int num_elements_per_list)
+{
+	int min_val = 0xFFFFFFFF;
+	int min_idx = 0;
+	// Iterate over each of the lists
+	for (int i=0; i<num_lists; i++)
+	{
+		// If the current list has already been emptied
+		// then ignore it
+		if (list_indexes[i] < num_elements_per_list)
+		{
+			const int src_idx = i + (list_indexes[i] * num_lists);
+			const int data = src_array[src_idx];
+			if (data <= min_val)
+			{
+				min_val = data;
+				min_idx = i;
+			}
+		}
 	}
-
+	list_indexes[min_idx]++;
+	return min_val;
 }
+
+void merge_array(unsigned int * const src_array,
+	unsigned int * const dest_array,
+	const int num_lists,
+	const int num_elements)
+{
+	const int num_elements_per_list = (num_elements / num_lists);
+	int list_indexes[32];
+	for (int list = 0; list < num_lists; list++)
+	{
+		list_indexes[list] = 0;
+	}
+	for (int i=0; i < num_elements; i++) {
+		dest_array[i] = find_min(src_array,
+			list_indexes,
+			num_lists,
+			num_elements_per_list);
+	}
+}
+__device__ void copy_data_to_shared(unsigned int * data,
+	unsigned int * sort_tmp,
+	const int num_lists,
+	const int num_elements,
+	const int tid)
+{
+	// Copy data into temp store
+	for (int i=0; i<num_elements; i+=num_lists)
+	{
+		sort_tmp[i+tid] = data[i+tid];
+	}
+	__syncthreads();
+}
+__device__ void merge_array6(unsigned int * src_array,
+	unsigned int * dest_array,
+	const int num_lists,
+	const int num_elements,
+	const int tid)
+{
+	const int num_elements_per_list = (num_elements / num_lists);
+	__shared__ int list_indexes[32];
+	list_indexes[tid] = 0;
+	// Wait for list_indexes[tid] to be cleared
+	__syncthreads();
+	// Iterate over all elements
+	for (int i = 0; i < num_elements; i++)
+	{
+		// Create a value shared with the other threads
+		__shared__ int min_val;
+		__shared__ int min_tid;
+		// Use a temp register for work purposes
+		int data;
+		// If the current list has not already been
+		// emptied then read from it, else ignore it
+		if (list_indexes[tid] < num_elements_per_list)
+		{
+			// Work out from the list_index, the index into
+			// the linear array
+			const int src_idx = tid + (list_indexes[tid] * num_lists);
+			// Read the data from the list for the given
+			// thread
+			data = src_array[src_idx];
+		}
+		else
+		{
+			data = 0xFFFFFFFF;
+		}
+		// Have thread zero clear the min values
+		if (tid == 0)
+		{
+			// Write a very large value so the first
+			// thread thread wins the min
+			min_val = 0xFFFFFFFF;
+			min_tid = 0xFFFFFFFF;
+		}
+		// Wait for all threads
+		__syncthreads();
+		// Have every thread try to store it’s value into
+		// min_val. Only the thread with the lowest value
+		// will win
+		atomicMin(&min_val, data);
+		// Make sure all threads have taken their turn.
+		__syncthreads();
+		// If this thread was the one with the minimum
+		if (min_val == data)
+		{
+			// Check for equal values
+			// Lowest tid wins and does the write
+			atomicMin(&min_tid, tid);
+		}
+		// Make sure all threads have taken their turn.
+		__syncthreads();
+		// If this thread has the lowest tid
+		if (tid == min_tid)
+		{
+			// Incremene the list pointer for this thread
+			list_indexes[tid]++;
+			// Store the winning value
+			dest_array[i] = data;
+		}
+	}
+}
+
+__global__ void gpu_sort_array_array(unsigned int * data,const int num_lists,const int num_elements)
+{
+	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+	__shared__ unsigned int sort_tmp[32];
+	__shared__ unsigned int sort_tmp_1[32];
+	copy_data_to_shared(data, sort_tmp, num_lists,
+		num_elements, tid);
+	radixSortParralel(sort_tmp, num_lists, num_elements,
+		tid, sort_tmp_1);
+	merge_array6(sort_tmp, data, num_lists,
+		num_elements, tid);
+}
+
+
 void print(unsigned int* arr, int n)
 {
 	for (int i = 0; i < n; i++)
@@ -333,6 +469,7 @@ void menu() {
 	cout << "0 Exit " << endl;
 	cout << " 1 Serial sort" << endl;
 	cout << " 2 Parrallel sort" << endl;
+	cout << " 3 Thrust Parrallel sort" << endl;
 }
 
 vector<unsigned int> ReadFile(string filepath) {
@@ -366,7 +503,7 @@ int main(int argc, char * argv[]) {
 	float totalTime = 0;
 
 	std::ifstream fin(argv[1]);
-	std::vector<unsigned int> host_double(SIZE);
+	std::vector<unsigned int> host_double(1);
 
 	unsigned int host_data[SIZE];
 
@@ -414,7 +551,7 @@ int main(int argc, char * argv[]) {
 		cout << "Success" << endl;
 
 	}
-	else {
+	else if(izbiraAlg == 2) {
 
 		//Parrallel radix sort
 		cout << endl;
@@ -441,9 +578,11 @@ int main(int argc, char * argv[]) {
 			cudaMemcpy(ddata, host_data, SIZE * sizeof(unsigned int), cudaMemcpyHostToDevice);			
 
 			high_resolution_clock::time_point start = high_resolution_clock::now();
-			radixSortParralel << <1, 10 >> >(ddata, ddata_tmp);
+			//radixSortParralel << <1, 10 >> >(ddata, ddata_tmp);
 			//radixSort << <(numBlocks, blockSize) >> > (ddata, ddata_tmp);
+			gpu_sort_array_array <<< 1,2  >> > (ddata,32,64);
 			high_resolution_clock::time_point stop = high_resolution_clock::now();
+			host_data[SIZE];
 
 			cudaMemcpy(host_data, ddata, SIZE * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
@@ -464,6 +603,26 @@ int main(int argc, char * argv[]) {
 			cout << endl << "Sorted" << endl;
 			print(host_data, size);
 		
+	}
+	else {
+		//thrust
+		// generate 32M random numbers serially
+		thrust::host_vector<int> h_vec(1 << 20);
+		std::generate(h_vec.begin(), h_vec.end(), rand);
+
+		// transfer data to the device
+		thrust::device_vector<int> d_vec = host_double;
+
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_double.begin());
+		for each (unsigned int var in host_double)
+		{
+			double tmp = (double)var / 100;
+			cout << tmp << endl;
+		}
 	}
 	
 	
