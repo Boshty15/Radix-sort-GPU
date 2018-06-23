@@ -7,20 +7,9 @@ void __syncthreads();
 #endif
 
 
-
+#include "cuda.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
-//#ifndef __CUDACC_RTC__ 
-//#define __CUDACC_RTC__
-//#endif
-//#pragma once
-//#ifdef __INTELLISENSE__
-//void __syncthreads();
-//
-//#endif
-
-#include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <stdio.h>
 #include "kernel.h"
@@ -30,7 +19,6 @@ void __syncthreads();
 #include <bitset>
 #include <time.h>
 #include <chrono>
-#include "device_functions.h"
 #include <math.h> 
 
 #include <thrust/host_vector.h>
@@ -41,176 +29,14 @@ void __syncthreads();
 #include <algorithm>
 #include <cstdlib>
 
-
-//#define SIZE 32
-#define BIT 32
-//
 using namespace std;
 using namespace chrono;
-//
-//__device__ unsigned int device_data[SIZE];
-//__device__ int ddata_s[SIZE];
-//
-////Test v gpu in nazaj
-//__global__ void gpucopy(int* src, int* dst)
-//{
-//	int index = blockIdx.x * blockDim.x + threadIdx.x;
-//	int stride = blockDim.x * gridDim.x;
-//	for (int i = index; i < SIZE; i += stride) {
-//		if(src[i] > 50)
-//			src[i] = dst[i] + 100;
-//		else 
-//			src[i] = dst[i] - 100;
-//	}
-//		
-//}
-//
-
-//
-//
-//void WriteFile(vector<double> vector) {
-//	ofstream myfile;
-//	myfile.open("out.txt");
-//	for each (double var in vector)
-//	{
-//		myfile << var << " ";
-//	}
-//	myfile.close();
-//}
-
-//
-//int main(int argc, char * argv[])
-//{
-//	cout << argv[1] << endl;
-//
-//	std::ifstream fin(argv[1]);
-//	
-//	std::vector<unsigned int> host_double(7);
-//	std::vector<int> host_double2(7);
-//
-//	float totalTime = 0;
-//	float milliseconds = 0;
-//
-//	//Time
-//	cudaEvent_t start, stop;
-//	cudaEventCreate(&start);
-//	cudaEventCreate(&stop);
-//
-//	if (!fin) {
-//		cerr << "Datoteka ne obstaja " << argv[1] << endl;
-//	}
-//	else {
-//		cout << "Datoteka obstaja " << argv[1] << endl;
-//		host_double = ReadFile(argv[1]);
-//
-//		//WriteFile(host_double);
-//	}
-//	int size = host_double.size();
-//	
-//	int* device = NULL;
-//	int* tmp_0 = NULL;
-//	int* tmp_1 = NULL;
-//	
-//	cudaMalloc((void**)&device, size * sizeof(int));
-//	cudaMalloc((void**)&tmp_0, size * sizeof(int));
-//	cudaMalloc((void**)&tmp_1, size * sizeof(int));
-//
-//	int blockSize = 4;
-//	int numBlocks = (SIZE + blockSize - 1) / blockSize;
-//	
-//	//string binary = bitset<16>(222).to_string(); //to binary
-//	//cout << binary << "\n";	
-//
-//	//unsigned long decimal = bitset<16>(binary).to_ulong();
-//	//cout << decimal << "\n";
-//
-//	//num_list 32 
-//
-//	cudaMemcpy(device,&*host_double.data(), size * sizeof(int), cudaMemcpyHostToDevice);
-//	
-//	//radixSort << <numBlocks, blockSize>> >(device, SIZE, size, tmp_1);
-//	//ParalelRadixSort << <(size + size - 1) / size, size >> >();
-//	gpucopy << <numBlocks, blockSize>> >(device, device);
-//	
-//	cudaDeviceSynchronize();
-//
-//	cudaMemcpy(&*host_double.data(), device, size * sizeof(int), cudaMemcpyDeviceToHost);
-//
-//	cout << endl << "host data" << endl;
-//	for each (unsigned int var in host_double)
-//	{
-//		double d = (double)var / 100;
-//		cout << d << " " << endl;
-//	}
-//
-//	cudaFree(device);
-//	cudaFree(tmp_0);
-//	cudaFree(tmp_1);
-//
-//	//std::vector<int> v(10);
-//
-//	//unsigned int hdata[SIZE];
-//
-//
-//	//	int size = host_double.size();
-//	//	//vector.resize(size);
-//
-//	//	std::copy(host_double.begin(), host_double.end(), hdata);
-//	//	//int *a = vector.data();
-//
-//	//	// Copy data from host to device
-//	//	cudaMemcpyToSymbol(device_data, hdata, SIZE * sizeof(unsigned int));
-//
-//	//	// Execution time measurement, that point starts the clock
-//	//	cudaEventRecord(start);
-//	//	ParalelRadixSort << <1, SIZE>> >();
-//
-//	//	// Execution time measurement, that point stops the clock
-//	//	cudaEventRecord(stop);
-//
-//	//	// Make kernel function synchronous
-//	//	cudaDeviceSynchronize();
-//
-//	//	cudaEventElapsedTime(&milliseconds, start, stop);
-//	//	totalTime += milliseconds;
-//	//	//milliseconds = 0;
-//
-//	//	// Copy data from device to host
-//	//	cudaMemcpyFromSymbol(hdata, device_data, SIZE * sizeof(unsigned int));
-//
-//	//	/*std::vector<int> v(hdata, hdata + sizeof hdata / sizeof hdata[0]);
-//	//	v.resize(size);*/
-//	//	milliseconds = 0;
-//	//
-//
-//	///*printf("TIME %4.2fs", milliseconds);
-//	//printf("\n");
-//	//printf("Effective Bandwidth (GB/s): %fn", SIZE * 4 * 3 / milliseconds / 1e6);
-//	//printf("\n");*/
-//	//cout << endl;
-//	//cout << "Host Data" << endl;
-//	///*for each (int var in v)
-//	//{
-//	//	double d = (double)var / 100;
-//	//	cout << d << " " << endl;
-//	//}*/
-//	//for (int i = 0; i < SIZE; i++) {
-//	//	double d = (double)hdata[i] / 100;
-//	//	cout << d << endl;
-//	//}
-//	//
-//	//cout << endl;
-//	//cout << "TIME %4.2fs " << totalTime << endl;
-//
-//    return 0;
-//}
 
 
-
+#define BIT 32
 #define SIZE (33 * 1024)
-#define LOOPS 1
-#define UPPER_BIT 31
-#define LOWER_BIT 0
+
+/*Serial radix sort*/
 int getMax(unsigned int* arr, int n)
 {
 	int mx = arr[0];
@@ -220,11 +46,9 @@ int getMax(unsigned int* arr, int n)
 	return mx;
 }
 
-// A function to do counting sort of arr[] according to
-// the digit represented by exp.
 void countSort(unsigned int* arr, int n, int exp)
 {
-// output array
+	// output array
 	vector<unsigned int> ve(n);
 	unsigned int* output = ve.data();
 	int i, count[10] = { 0 };
@@ -251,7 +75,6 @@ void countSort(unsigned int* arr, int n, int exp)
 		arr[i] = output[i];
 }
 
-// The main function to that sorts arr[] of size n using 
 // Radix Sort
 void serialRadixSort(unsigned int* arr, int n)
 {
@@ -265,32 +88,19 @@ void serialRadixSort(unsigned int* arr, int n)
 		countSort(arr, n, exp);
 }
 
-// A utility function to print an array
 
-
-__device__ unsigned int device_data[SIZE];
-
-// naive warp-level bitwise radix sort
 __device__ void radixSortParralel(unsigned int* sort_tmp, const int num_lists, const int num_element, const int tid, unsigned int* sort_tmp_1) {
-	/*const int num_lists = SIZE;
-	const int num_element = 10;*/
+	//if (sort_tmp == NULL) {
+	//	printf("\nsort_tmp is null");
+	//}
 
-	/*int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int stride = blockDim.x * gridDim.x;   */
-	//printf("\n%d num list: %d" ,tid, num_lists );
-	//printf("\n num element: %d" , num_element);
-	if (sort_tmp == NULL) {
-		printf("\nsort_tmp is null");
-	}
-	
-
-    for (int bit = 0; bit < BIT; bit++) {
+	for (int bit = 0; bit < BIT; bit++) {
 		const int bit_mask = (1 << bit);
 		int base_cnt_0 = 0, base_cnt_1 = 0;
 		//printf("\ntest1 + %d",tid );
 		for (int i = 0; i < num_element; i += num_lists) {
 			int elem = sort_tmp[i + tid];
-			
+
 			//printf("\ntest %d + %d bit %d",tid, elem, bit_mask);
 			if ((elem & bit_mask) > 0) {
 				sort_tmp_1[base_cnt_1 + tid] = elem;
@@ -309,7 +119,6 @@ __device__ void radixSortParralel(unsigned int* sort_tmp, const int num_lists, c
 			//printf("\nsort tmp: %d", sort_tmp_0[i + tid]);
 		}
 	}
-	//cudaDeviceSynchronize();
 	__syncthreads();
 
 	//for (int i = 0; i < num_element; i++) {
@@ -324,7 +133,7 @@ int find_min(unsigned int * const src_array,
 	int min_val = 0xFFFFFFFF;
 	int min_idx = 0;
 	// Iterate over each of the lists
-	for (int i=0; i<num_lists; i++)
+	for (int i = 0; i < num_lists; i++)
 	{
 		// If the current list has already been emptied
 		// then ignore it
@@ -342,25 +151,6 @@ int find_min(unsigned int * const src_array,
 	list_indexes[min_idx]++;
 	return min_val;
 }
-
-void merge_array(unsigned int * const src_array,
-	unsigned int * const dest_array,
-	const int num_lists,
-	const int num_elements)
-{
-	const int num_elements_per_list = (num_elements / num_lists);
-	int list_indexes[32];
-	for (int list = 0; list < num_lists; list++)
-	{
-		list_indexes[list] = 0;
-	}
-	for (int i=0; i < num_elements; i++) {
-		dest_array[i] = find_min(src_array,
-			list_indexes,
-			num_lists,
-			num_elements_per_list);
-	}
-}
 __device__ void copy_data_to_shared(unsigned int * data,
 	unsigned int * sort_tmp,
 	const int num_lists,
@@ -368,9 +158,9 @@ __device__ void copy_data_to_shared(unsigned int * data,
 	const int tid)
 {
 	// Copy data into temp store
-	for (int i=0; i<num_elements; i+=num_lists)
+	for (int i = 0; i < num_elements; i += num_lists)
 	{
-		sort_tmp[i+tid] = data[i+tid];
+		sort_tmp[i + tid] = data[i + tid];
 	}
 	__syncthreads();
 }
@@ -381,7 +171,9 @@ __device__ void merge_array6(unsigned int * src_array,
 	const int tid)
 {
 	const int num_elements_per_list = (num_elements / num_lists);
+	
 	__shared__ int list_indexes[32];
+
 	list_indexes[tid] = 0;
 	// Wait for list_indexes[tid] to be cleared
 	__syncthreads();
@@ -421,7 +213,9 @@ __device__ void merge_array6(unsigned int * src_array,
 		// Have every thread try to store it’s value into
 		// min_val. Only the thread with the lowest value
 		// will win
+
 		atomicMin(&min_val, data);
+
 		// Make sure all threads have taken their turn.
 		__syncthreads();
 		// If this thread was the one with the minimum
@@ -429,6 +223,7 @@ __device__ void merge_array6(unsigned int * src_array,
 		{
 			// Check for equal values
 			// Lowest tid wins and does the write
+
 			atomicMin(&min_tid, tid);
 		}
 		// Make sure all threads have taken their turn.
@@ -444,11 +239,13 @@ __device__ void merge_array6(unsigned int * src_array,
 	}
 }
 
-__global__ void gpu_sort_array_array(unsigned int * data,const int num_lists,const int num_elements)
+__global__ void gpu_sort_array_array(unsigned int * data, const int num_lists, const int num_elements)
 {
 	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
-	__shared__ unsigned int sort_tmp[32];
-	__shared__ unsigned int sort_tmp_1[32];
+
+	__shared__ unsigned int sort_tmp[64];
+	__shared__ unsigned int sort_tmp_1[64];
+
 	copy_data_to_shared(data, sort_tmp, num_lists,
 		num_elements, tid);
 	radixSortParralel(sort_tmp, num_lists, num_elements,
@@ -456,7 +253,6 @@ __global__ void gpu_sort_array_array(unsigned int * data,const int num_lists,con
 	merge_array6(sort_tmp, data, num_lists,
 		num_elements, tid);
 }
-
 
 void print(unsigned int* arr, int n)
 {
@@ -466,11 +262,21 @@ void print(unsigned int* arr, int n)
 
 void menu() {
 	cout << "Izberi: " << endl;
-	cout << "0 Exit " << endl;
+	cout << " 0 Exit " << endl;
 	cout << " 1 Serial sort" << endl;
 	cout << " 2 Parrallel sort" << endl;
 	cout << " 3 Thrust Parrallel sort" << endl;
 }
+
+//void WriteFile(vector<double> vector) {
+//	ofstream myfile;
+//	myfile.open("out.txt");
+//	for each (double var in vector)
+//	{
+//		myfile << var << " ";
+//	}
+//	myfile.close();
+//}
 
 vector<unsigned int> ReadFile(string filepath) {
 	vector<unsigned int> vector;
@@ -479,15 +285,8 @@ vector<unsigned int> ReadFile(string filepath) {
 
 	//read the elements in the file into a vector  
 	while (inputFile >> value) {
-		//bitset<32>tmp(value *100);
-		//cout << tmp << " ";
 		vector.push_back(value * 100);
-		//cout << (int)(tmp.to_ulong()) << " "; // konvert nazaj to int
 	}
-	/*for each (unsigned int var in vector)
-	{
-	cout << var << " " << endl;
-	}*/
 	inputFile.close();
 	return vector;
 }
@@ -503,128 +302,132 @@ int main(int argc, char * argv[]) {
 	float totalTime = 0;
 
 	std::ifstream fin(argv[1]);
-	std::vector<unsigned int> host_double(1);
+	//std::vector<unsigned int> host_double(1);
 
 	unsigned int host_data[SIZE];
 
-	if (!fin) {
-		cerr << "Datoteka ne obstaja " << argv[1] << endl;
-	}
-	else {
-		cout << "Datoteka obstaja " << argv[1] << endl;
-		host_double = ReadFile(argv[1]);
-		
-		//WriteFile(host_double);
-	}
-	int size = host_double.size();
+	// generate 32M random numbers serially
+	
 
-	int izbiraAlg;
-	menu();
-	cin >> izbiraAlg;
-	if (izbiraAlg == 0) {
+	//if (!fin) {
+	//	cerr << "Datoteka ne obstaja " << argv[1] << endl;
+	//}
+	//else {
+	//	cout << "Datoteka obstaja " << argv[1] << endl;
+	//	host_double = ReadFile(argv[1]);
 
-	}else if (izbiraAlg == 1) {
+	//	//WriteFile(host_double);
+	//}
+	
 
-		//Serial radix sort
+	while (true) {
+		thrust::host_vector<unsigned int> host_double(32 << 20);
+		std::generate(host_double.begin(), host_double.end(), rand);
+		int size = host_double.size();
 
-		unsigned int* da = host_double.data();
-		//int arr[] = { 170, 45, 75, 90, 802, 24, 2, 66, 170, 45, 75, 90, 802, 24, 2, 66 };
-		int n = sizeof(host_double) / sizeof(host_double[0]);
-		//auto t1 = high_resolution_clock::now();
-		high_resolution_clock::time_point t1 = high_resolution_clock::now();
-		serialRadixSort(da, size);
-		high_resolution_clock::time_point t2 = high_resolution_clock::now();
-		auto duration = duration_cast <milliseconds> (t2 - t1).count();
-		//auto t2 = high_resolution_clock::now();
-		//auto diff = duration_cast<duration<double>>(t2 - t1);
-		// now elapsed time, in seconds, as a double can be found in diff.count()
-		//long ms = (long)(1000 * diff.count());
-		cout << endl << "Serial radix sort " << endl;
-		//print(da, size);
-		for (int i = 0; i < size - 1; i++) {
-			if (host_double[i] > host_double[i + 1]) {
-				printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, host_double[i], i + 1, host_double[i + 1]);
-				return 1;
-			}
+		int izbiraAlg;
+		menu();
+		cin >> izbiraAlg;
+		if (izbiraAlg == 0) {
+			return 0;
 		}
-		cout << "Total time: " << duration << "ms" << endl;
-		cout << "Success" << endl;
+		else if (izbiraAlg == 1) {
 
-	}
-	else if(izbiraAlg == 2) {
+			//Serial radix sort
 
-		//Parrallel radix sort
-		cout << endl;
-		//unsigned int t = decToBinary(10);
-		//unsigned int tmp22;
-		/*bitset<32>tmp(65.55);
-		cout << tmp << endl;*/
-			
-		cout << "Parrallel sort " << endl;
-		std::copy(host_double.begin(), host_double.end(), host_data);
-		cout << "Not sorted!" << endl;
-		print(host_data, size);
+			unsigned int* da = host_double.data();
+			int n = sizeof(host_double) / sizeof(host_double[0]);
+			//auto t1 = high_resolution_clock::now();
+			high_resolution_clock::time_point start = high_resolution_clock::now();
+			serialRadixSort(da, size);
+			high_resolution_clock::time_point stop = high_resolution_clock::now();
+			auto duration = duration_cast <milliseconds> (stop - start).count();
+			cout << endl << "Serial radix sort " << endl;
+			//print(da, size);
+			for (int i = 0; i < size - 1; i++) {
+				if (host_double[i] > host_double[i + 1]) {
+					printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, host_double[i], i + 1, host_double[i + 1]);
+					return 1;
+				}
+			}
+			cout << "Total time: " << duration << "ms" << endl;
+			cout << "Success" << endl;
 
-		unsigned int* ddata;
-		unsigned int* ddata_tmp;
-		//
+		}
+		else if (izbiraAlg == 2) {
 
-		//for (int lcount = 0; lcount < LOOPS; lcount++) {
-		//	unsigned int range = 1U << UPPER_BIT;
-		//	//for (int i = 0; i < SIZE; i++) host_data[i] = rand() % range;
-			//cudaMemcpyToSymbol(device_data, host_data, SIZE * sizeof(unsigned int));
+			//Parrallel radix sort
+			cout << endl;
+			cout << "Parrallel sort " << endl;
+			std::copy(host_double.begin(), host_double.end(), host_data);
+			/*cout << "Not sorted!" << endl;
+			print(host_data, size);*/
+
+			unsigned int* ddata;
+			unsigned int* ddata_tmp;
+			//
+
+			//for (int lcount = 0; lcount < LOOPS; lcount++) {
+			//	unsigned int range = 1U << UPPER_BIT;
+			//	//for (int i = 0; i < SIZE; i++) host_data[i] = rand() % range;
+				//cudaMemcpyToSymbol(device_data, host_data, SIZE * sizeof(unsigned int));
 			cudaMalloc((void**)&ddata_tmp, SIZE * sizeof(unsigned int));
 			cudaMalloc((void**)&ddata, SIZE * sizeof(unsigned int));
-			cudaMemcpy(ddata, host_data, SIZE * sizeof(unsigned int), cudaMemcpyHostToDevice);			
+			cudaMemcpy(ddata, host_data, SIZE * sizeof(unsigned int), cudaMemcpyHostToDevice);
 
 			high_resolution_clock::time_point start = high_resolution_clock::now();
 			//radixSortParralel << <1, 10 >> >(ddata, ddata_tmp);
 			//radixSort << <(numBlocks, blockSize) >> > (ddata, ddata_tmp);
-			gpu_sort_array_array <<< 1,2  >> > (ddata,32,64);
+			gpu_sort_array_array << < 1, 2 >> > (ddata, 32, 64);
 			high_resolution_clock::time_point stop = high_resolution_clock::now();
 			host_data[SIZE];
 
 			cudaMemcpy(host_data, ddata, SIZE * sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
 			//cudaMemcpyFromSymbol(host_data, device_data, SIZE * sizeof(unsigned int));
-			auto durationParralel = duration_cast <milliseconds> (start - stop).count();
-		//	/*for (int i = 0; i < SIZE - 1; i++) {
-		//	if (host_data[i] > host_data[i + 1]) {
-		//	printf("sort error at loop %d, hdata[%d] = %d, hdata[%d] = %d\n", lcount, i, host_data[i], i + 1, host_data[i + 1]);
-		//	return 1;
-		//	}
-		//	}*/
-		//	cout << " Sorted data: " << endl;
-		//	for (int i = 0; i < size; i++) {
-		//		cout << i << "     " <<(double)host_data[i] / 100 << endl;
-		//	}
-		//	cout << " Time parralel sort: " << durationParralel << endl;
-		//}
+			auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+			//	/*for (int i = 0; i < SIZE - 1; i++) {
+			//	if (host_data[i] > host_data[i + 1]) {
+			//	printf("sort error at loop %d, hdata[%d] = %d, hdata[%d] = %d\n", lcount, i, host_data[i], i + 1, host_data[i + 1]);
+			//	return 1;
+			//	}
+			//	}*/
+			//	cout << " Sorted data: " << endl;
+			//	for (int i = 0; i < size; i++) {
+			//		cout << i << "     " <<(double)host_data[i] / 100 << endl;
+			//	}
+			//	cout << " Time parralel sort: " << durationParralel << endl;
+			//}
 			cout << endl << "Sorted" << endl;
 			print(host_data, size);
-		
-	}
-	else {
-		//thrust
-		// generate 32M random numbers serially
-		thrust::host_vector<int> h_vec(1 << 20);
-		std::generate(h_vec.begin(), h_vec.end(), rand);
 
-		// transfer data to the device
-		thrust::device_vector<int> d_vec = host_double;
+		}
+		else {
+			//thrust
 
-		// sort data on the device (846M keys per second on GeForce GTX 480)
-		thrust::sort(d_vec.begin(), d_vec.end());
+			cout << "Parralel Radix sort Thrust" << endl;
 
-		// transfer data back to host
-		thrust::copy(d_vec.begin(), d_vec.end(), host_double.begin());
-		for each (unsigned int var in host_double)
-		{
-			double tmp = (double)var / 100;
-			cout << tmp << endl;
+			// transfer data to the device
+			thrust::device_vector<int> d_vec = host_double;
+
+			high_resolution_clock::time_point start = high_resolution_clock::now();
+			// sort data on the device (846M keys per second on GeForce GTX 480)
+			thrust::sort(d_vec.begin(), d_vec.end());
+			high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+			// transfer data back to host
+			thrust::copy(d_vec.begin(), d_vec.end(), host_double.begin());
+
+			auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+			cout << "Time: " << durationParralel << "ms" << endl;
+			/*for each (unsigned int var in host_double)
+			{
+				double tmp = (double)var / 100;
+				cout << tmp << endl;
+			}*/
 		}
 	}
-	
-	
+
+
 	return 0;
 }
