@@ -252,6 +252,7 @@ __global__ void gpu_sort_array_array(unsigned int * data, const int num_lists, c
 		tid, sort_tmp_1);
 	merge_array6(sort_tmp, data, num_lists,
 		num_elements, tid);
+
 }
 
 void print(unsigned int* arr, int n)
@@ -302,27 +303,27 @@ int main(int argc, char * argv[]) {
 	float totalTime = 0;
 
 	std::ifstream fin(argv[1]);
-	//std::vector<unsigned int> host_double(1);
+	std::vector<unsigned int> host_double(1);
 
 	unsigned int host_data[SIZE];
 
 	// generate 32M random numbers serially
 	
 
-	//if (!fin) {
-	//	cerr << "Datoteka ne obstaja " << argv[1] << endl;
-	//}
-	//else {
-	//	cout << "Datoteka obstaja " << argv[1] << endl;
-	//	host_double = ReadFile(argv[1]);
+	if (!fin) {
+		cerr << "Datoteka ne obstaja " << argv[1] << endl;
+	}
+	else {
+		cout << "Datoteka obstaja " << argv[1] << endl;
+		host_double = ReadFile(argv[1]);
 
-	//	//WriteFile(host_double);
-	//}
+		//WriteFile(host_double);
+	}
 	
 
 	while (true) {
-		thrust::host_vector<unsigned int> host_double(32 << 20);
-		std::generate(host_double.begin(), host_double.end(), rand);
+		/*thrust::host_vector<unsigned int> host_double(32 << 20);
+		std::generate(host_double.begin(), host_double.end(), rand);*/
 		int size = host_double.size();
 
 		int izbiraAlg;
