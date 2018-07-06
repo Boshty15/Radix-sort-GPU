@@ -291,8 +291,8 @@ vector<unsigned int> ReadFile(string filepath) {
 	inputFile.close();
 	return vector;
 }
-//int argc, char * argv[]
-int main() {
+
+int main(int argc, char * argv[]) {
 
 	int blockSize = 32;
 	int numBlocks = (SIZE + blockSize - 1) / blockSize;
@@ -302,7 +302,7 @@ int main() {
 	cudaEventCreate(&stop);
 	float totalTime = 0;
 
-	/*std::ifstream fin(argv[1]);*/
+	std::ifstream fin(argv[1]);
 	std::vector<unsigned int> host_double(1);
 
 	unsigned int host_data[SIZE];
@@ -310,18 +310,18 @@ int main() {
 	// generate 32M random numbers serially
 	
 
-	//if (!fin) {
-	//	cerr << "Datoteka ne obstaja " << argv[1] << endl;
-	//}
-	//else {
-	//	cout << "Datoteka obstaja " << argv[1] << endl;
-	//	host_double = ReadFile(argv[1]);
+	if (!fin) {
+		cerr << "Datoteka ne obstaja " << argv[1] << endl;
+	}
+	else {
+		cout << "Datoteka obstaja " << argv[1] << endl;
+		host_double = ReadFile(argv[1]);
 
-	//	//WriteFile(host_double);
-	//}
+		//WriteFile(host_double);
+	}
 	
 
-	while (false) {
+	while (true) {
 		/*thrust::host_vector<unsigned int> host_double(32 << 20);
 		std::generate(host_double.begin(), host_double.end(), rand);*/
 		int size = host_double.size();
@@ -402,7 +402,6 @@ int main() {
 			cout << endl << "Sorted" << endl;
 			print(host_data, size);
 
-
 		}
 		else {
 			//thrust
@@ -411,7 +410,6 @@ int main() {
 
 			// transfer data to the device
 			thrust::device_vector<int> d_vec = host_double;
-
 
 			high_resolution_clock::time_point start = high_resolution_clock::now();
 			// sort data on the device (846M keys per second on GeForce GTX 480)
@@ -429,7 +427,6 @@ int main() {
 				cout << tmp << endl;
 			}*/
 		}
-
 	}
 
 
