@@ -35,20 +35,76 @@
 using namespace std;
 using namespace std::chrono;
 
-int getMax(unsigned int* arr, int n)
+size_t getMax2(vector<string> arr, int n) {
+	size_t max = arr[0].size();
+	for (int i = 1; i < n; i++) {
+		if (arr[i].size()>max)
+			max = arr[i].size();
+	}
+	return max;
+}
+
+void countSort2(vector<string> a, int size, size_t k) {
+	string *b = NULL; int *c = NULL;
+	b = new string[size];
+	c = new int[257];
+
+
+
+	for (int i = 0; i <257; i++) {
+		c[i] = 0;
+		//cout << c[i] << "\n";
+	}
+	for (int j = 0; j <size; j++) {
+		c[k < a[j].size() ? (int)(unsigned char)a[j][k] + 1 : 0]++;            //a[j] is a string
+																			   //cout << c[a[j]] << endl;
+	}
+
+	for (int f = 1; f <257; f++) {
+		c[f] += c[f - 1];
+	}
+
+	for (int r = size - 1; r >= 0; r--) {
+		b[c[k < a[r].size() ? (int)(unsigned char)a[r][k] + 1 : 0] - 1] = a[r];
+		c[k < a[r].size() ? (int)(unsigned char)a[r][k] + 1 : 0]--;
+	}
+
+	for (int l = 0; l < size; l++) {
+		a[l] = b[l];
+	}
+
+	// avold memory leak
+	delete[] b;
+	delete[] c;
+}
+
+
+void radixSort2(vector<string> b, int r) {
+	size_t max = getMax2(b, r);
+	for (size_t digit = max; digit > 0; digit--) { // size_t is unsigned, so avoid using digit >= 0, which is always true
+		countSort2(b, r, digit - 1);
+	}
+
+}
+
+
+
+template <class T>
+T getMax(T* arr, int n)
 {
-	int mx = arr[0];
+	T mx = arr[0];
 	for (int i = 1; i < n; i++)
 		if (arr[i] > mx)
 			mx = arr[i];
 	return mx;
 }
 
-void countSort(unsigned int* arr, int n, int exp)
+template <class T>
+void countSort(T* arr, int n, int exp)
 {
 	// output array
-	vector<unsigned int> ve(n);
-	unsigned int* output = ve.data();
+	vector<T> ve(n);
+	T* output = ve.data();
 	int i, count[10] = { 0 };
 
 	// Store count of occurrences in count[]
@@ -74,10 +130,11 @@ void countSort(unsigned int* arr, int n, int exp)
 }
 
 // Radix Sort
-void serialRadixSort(unsigned int* arr, int n)
+template <class T>
+void serialRadixSort(T* arr, int n)
 {
 	// Find the maximum number to know number of digits
-	int m = getMax(arr, n);
+	T m = getMax(arr, n);
 
 	// Do counting sort for every digit. Note that instead
 	// of passing digit number, exp is passed. exp is 10^i
@@ -130,46 +187,447 @@ int main(int argc, char * argv[]) {
 		break;
 	}
 	cout << "Izbral si: " << N << " elementov" << endl;
+
+
+	cout << "(1) Integer" << endl;
+	cout << "(2) Char" << endl;
+	cout << "(3) Long" << endl;
+	cout << "(4) Float" << endl;
+	cout << "(5) Double" << endl;
+	int tip;
+	cin >> tip;
+
+	switch (tip)
+	{
+	case 1: 
+	{
+		cout << endl;
+		cout << endl;
+		cout << "Int" << endl << endl;
+
+		
+
+		//cout << "Parralel: HOST Stable Radix sort" << endl;
+
+		//thrust::host_vector<unsigned int> host_int_Parralel_Host(N);
+		//std::generate(host_int_Parralel_Host.begin(), host_int_Parralel_Host.end(), rand);
+
+		//cout << "Parralel size: " << host_int_Parralel_Host.size() << endl;
+
+		//thrust::device_vector<unsigned int> d_vec_Host = host_int_Parralel_Host;
+
+		//high_resolution_clock::time_point start_Host = high_resolution_clock::now();
+		//// sort data on the device (846M keys per second on GeForce GTX 480)
+		//thrust::stable_sort(thrust::host,d_vec_Host.begin(), d_vec_Host.end());
+		//high_resolution_clock::time_point stop_Host = high_resolution_clock::now();
+
+		//// transfer data back to host
+		//thrust::copy(d_vec_Host.begin(), d_vec_Host.end(), host_int_Parralel_Host.begin());
+
+		//auto durationParralel_Host = duration_cast <milliseconds> (stop_Host - start_Host).count();
+		//cout << "Time: " << durationParralel_Host << " milliseconds" << endl;
+
+		//cout << endl;
+		//cout << endl;
+
+
+		cout << "Parralel:  Stable Radix sort" << endl;
+
+		thrust::host_vector<unsigned int> host_int_Parralel_S(N);
+		std::generate(host_int_Parralel_S.begin(), host_int_Parralel_S.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel_S.size() << endl;
+
+		thrust::device_vector<unsigned int> d_vec_S = host_int_Parralel_S;
+
+		high_resolution_clock::time_point start_S = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::stable_sort(d_vec_S.begin(), d_vec_S.end());
+		high_resolution_clock::time_point stop_S = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Parralel_S.begin());
+
+		auto durationParralel_S = duration_cast <milliseconds> (stop_S - start_S).count();
+		cout << "Time: " << durationParralel_S << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		//////thrust parralel
+		cout << "Parralel: Radix sort" << endl;
+
+		thrust::host_vector<unsigned int> host_int_Parralel(N);
+		std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel.size() << endl;
+
+		thrust::device_vector<unsigned int> d_vec = host_int_Parralel;
+
+		high_resolution_clock::time_point start = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+		high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+
+		auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+		cout << "Time: " << durationParralel << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		cout << "Serial Radix sort" << endl;
+
+		thrust::host_vector<unsigned int> host_int_Serial(N);
+		std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+
+		cout << "Serial size: " << host_int_Serial.size() << endl;
+
+		//thrust::device_vector<unsigned long int> d_vec_S;
+		unsigned int* da = host_int_Serial.data();
+		high_resolution_clock::time_point startS = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		serialRadixSort<unsigned int>(da, N);
+		high_resolution_clock::time_point stopS = high_resolution_clock::now();
+
+		auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+		cout << "Time: " << durationS << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl; 
+		break;
+	}
+	case 2:
+	{
+		cout << endl;
+		cout << endl;
+		cout << "Char" << endl << endl;
+
+		cout << "Parralel:  Stable Radix sort" << endl;
+
+		thrust::host_vector<char> host_int_Parralel_S(N);
+		std::generate(host_int_Parralel_S.begin(), host_int_Parralel_S.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel_S.size() << endl;
+
+		thrust::device_vector<char> d_vec_S = host_int_Parralel_S;
+
+		high_resolution_clock::time_point start_S = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::stable_sort(d_vec_S.begin(), d_vec_S.end());
+		high_resolution_clock::time_point stop_S = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Parralel_S.begin());
+
+		auto durationParralel_S = duration_cast <milliseconds> (stop_S - start_S).count();
+		cout << "Time: " << durationParralel_S << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		//////thrust parralel
+		cout << "Parralel: Radix sort" << endl;
+
+		thrust::host_vector<char> host_int_Parralel(N);
+		std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel.size() << endl;
+		//cout << host_int_Parralel.data() << endl;
+
+		thrust::device_vector<char> d_vec = host_int_Parralel;
+
+		high_resolution_clock::time_point start = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+		high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+		//cout << host_int_Parralel.data() << endl;
+
+		auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+		cout << "Time: " << durationParralel << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
 	
-	//////thrust parralel
-	cout << "Parralel Radix sort Thrust" << endl;
+		
+		string t(host_int_Parralel.begin(), host_int_Parralel.end());
+		vector<string> tmp;
+		tmp.push_back(t);
 
-	thrust::host_vector<unsigned int> host_int_Parralel(N);
-	std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+		
 
-	cout << "Parralel size: " << host_int_Parralel.size() << endl;
+		/*countingRadixSort(tmp, N);*/
 
-	thrust::device_vector<unsigned int> d_vec = host_int_Parralel;
+		//cout << "Serial Radix sort" << endl;
 
-	high_resolution_clock::time_point start = high_resolution_clock::now();
-	// sort data on the device (846M keys per second on GeForce GTX 480)
-	thrust::sort(d_vec.begin(), d_vec.end());
-	high_resolution_clock::time_point stop = high_resolution_clock::now();
+		//thrust::host_vector<char> host_int_Serial(N);
+		//std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
 
-	// transfer data back to host
-	thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+		//cout << "Serial size: " << host_int_Serial.size() << endl;
 
-	auto durationParralel = duration_cast <milliseconds> (stop - start).count();
-	cout << "Time: " << durationParralel << " milliseconds" << endl;
+		////thrust::device_vector<unsigned long int> d_vec_S;
+		//char* da = host_int_Serial.data();
+		high_resolution_clock::time_point startS = high_resolution_clock::now();
+		//// sort data on the device (846M keys per second on GeForce GTX 480)
+		//serialRadixSort<char>(da, N);
+		radixSort2(tmp, (int)(sizeof(tmp) / sizeof(tmp[0])));
+
+		high_resolution_clock::time_point stopS = high_resolution_clock::now();
+
+		auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+		cout << "Time: " << durationS << " milliseconds" << endl;
+
+		//cout << endl;
+		//cout << endl;
+		break;
+	}
+	case 3:
+	{
+		cout << endl;
+		cout << endl;
+		cout << "Long" << endl << endl;
+
+		cout << "Parralel:  Stable Radix sort" << endl;
+
+		thrust::host_vector<long> host_int_Parralel_S(N);
+		std::generate(host_int_Parralel_S.begin(), host_int_Parralel_S.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel_S.size() << endl;
+
+		thrust::device_vector<long> d_vec_S = host_int_Parralel_S;
+
+		high_resolution_clock::time_point start_S = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::stable_sort(d_vec_S.begin(), d_vec_S.end());
+		high_resolution_clock::time_point stop_S = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Parralel_S.begin());
+
+		auto durationParralel_S = duration_cast <milliseconds> (stop_S - start_S).count();
+		cout << "Time: " << durationParralel_S << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		//////thrust parralel
+		cout << "Parralel: Radix sort" << endl;
+
+		thrust::host_vector<long> host_int_Parralel(N);
+		std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel.size() << endl;
+
+		thrust::device_vector<long> d_vec = host_int_Parralel;
+
+		high_resolution_clock::time_point start = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+		high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+
+		auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+		cout << "Time: " << durationParralel << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		cout << "Serial Radix sort" << endl;
+
+		thrust::host_vector<long> host_int_Serial(N);
+		std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+
+		cout << "Serial size: " << host_int_Serial.size() << endl;
+
+		//thrust::device_vector<unsigned long int> d_vec_S;
+		long* da = host_int_Serial.data();
+		high_resolution_clock::time_point startS = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		serialRadixSort<long>(da, N);
+		high_resolution_clock::time_point stopS = high_resolution_clock::now();
+
+		auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+		cout << "Time: " << durationS << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+		break;
+	}
+	case 4:
+	{
+		cout << endl;
+		cout << endl;
+		cout << "float" << endl << endl;
+
+		cout << "Parralel:  Stable Radix sort" << endl;
 
 
+		thrust::host_vector<float> host_int_Parralel_S(N);
+		std::generate(host_int_Parralel_S.begin(), host_int_Parralel_S.end(), rand);
 
-	cout << "Serial Radix sort Thrust" << endl;
+		cout << "Parralel size: " << host_int_Parralel_S.size() << endl;
 
-	thrust::host_vector<unsigned int> host_int_Serial(N);
-	std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+		thrust::device_vector<float> d_vec_S = host_int_Parralel_S;
 
-	cout << "Serial size: " << host_int_Serial.size() << endl;
+		high_resolution_clock::time_point start_S = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::stable_sort(d_vec_S.begin(), d_vec_S.end());
+		high_resolution_clock::time_point stop_S = high_resolution_clock::now();
 
-	//thrust::device_vector<unsigned long int> d_vec_S;
-	unsigned int* da = host_int_Serial.data();
-	high_resolution_clock::time_point startS = high_resolution_clock::now();
-	// sort data on the device (846M keys per second on GeForce GTX 480)
-	serialRadixSort(da, N);
-	high_resolution_clock::time_point stopS = high_resolution_clock::now();
+		// transfer data back to host
+		thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Parralel_S.begin());
+
+		auto durationParralel_S = duration_cast <milliseconds> (stop_S - start_S).count();
+		cout << "Time: " << durationParralel_S << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		//////thrust parralel
+		cout << "Parralel: Radix sort" << endl;
+
+		thrust::host_vector<float> host_int_Parralel(N);
+		std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel.size() << endl;
+
+		thrust::device_vector<float> d_vec = host_int_Parralel;
+
+		high_resolution_clock::time_point start = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+		high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+
+		auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+		cout << "Time: " << durationParralel << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		cout << "Serial Radix sort" << endl;
+
+		thrust::host_vector<float> host_int_Serial(N);
+		thrust::host_vector<unsigned int> host_int_Serial_Int(0);
+		std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+		for each (float var in host_int_Serial)
+		{
+			host_int_Serial_Int.push_back(var);
+			//cout << var << endl;
+		}
+		cout << host_int_Serial_Int.size() << endl;
+
+		cout << "Serial size: " << host_int_Serial.size() << endl;
+
+		//thrust::device_vector<unsigned long int> d_vec_S;
+		unsigned int* da = host_int_Serial_Int.data();
+		high_resolution_clock::time_point startS = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		serialRadixSort<unsigned int>(da, N);
+		high_resolution_clock::time_point stopS = high_resolution_clock::now();
+
+		auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+		cout << "Time: " << durationS << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+		break;
+	}
+	case 5:
+	{
+		cout << endl;
+		cout << endl;
+		cout << "double" << endl << endl;
+
+		cout << "Parralel:  Stable Radix sort" << endl;
+
+		thrust::host_vector<double> host_int_Parralel_S(N);
+		std::generate(host_int_Parralel_S.begin(), host_int_Parralel_S.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel_S.size() << endl;
+
+		thrust::device_vector<double> d_vec_S = host_int_Parralel_S;
+
+		high_resolution_clock::time_point start_S = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::stable_sort(d_vec_S.begin(), d_vec_S.end());
+		high_resolution_clock::time_point stop_S = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Parralel_S.begin());
+
+		auto durationParralel_S = duration_cast <milliseconds> (stop_S - start_S).count();
+		cout << "Time: " << durationParralel_S << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		//////thrust parralel
+		cout << "Parralel: Radix sort" << endl;
+
+		thrust::host_vector<double> host_int_Parralel(N);
+		std::generate(host_int_Parralel.begin(), host_int_Parralel.end(), rand);
+
+		cout << "Parralel size: " << host_int_Parralel.size() << endl;
+
+		thrust::device_vector<double> d_vec = host_int_Parralel;
+
+		high_resolution_clock::time_point start = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		thrust::sort(d_vec.begin(), d_vec.end());
+		high_resolution_clock::time_point stop = high_resolution_clock::now();
+
+		// transfer data back to host
+		thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
+
+		auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+		cout << "Time: " << durationParralel << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+
+		cout << "Serial Radix sort" << endl;
+
+		thrust::host_vector<double> host_int_Serial(N);
+		thrust::host_vector<unsigned int> host_int_Serial_IntD(0);
+		std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+
+		cout << "Serial size: " << host_int_Serial.size() << endl;
+		for each (double var in host_int_Serial)
+		{
+			host_int_Serial_IntD.push_back(var);
+			//cout << var << endl;
+		}
+
+		//thrust::device_vector<unsigned long int> d_vec_S;
+		unsigned int* da = host_int_Serial_IntD.data();
+		high_resolution_clock::time_point startS = high_resolution_clock::now();
+		// sort data on the device (846M keys per second on GeForce GTX 480)
+		serialRadixSort<unsigned int>(da, N);
+		high_resolution_clock::time_point stopS = high_resolution_clock::now();
+
+		auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+		cout << "Time: " << durationS << " milliseconds" << endl;
+
+		cout << endl;
+		cout << endl;
+		break;
+	}
+	default:
+		
+		break;
+	}
+
 	
-	auto durationS = duration_cast <milliseconds> (stopS - startS).count();
-	cout << "Time: " << durationS << " milliseconds" << endl;
 	
 	 //sort data on the device (846M keys per second on GeForce GTX 480)
 	//thrust::sort(thrust::host, d_vec_S.begin(), d_vec_S.end());
