@@ -143,48 +143,47 @@ int main(int argc, char * argv[]) {
 
 	high_resolution_clock::time_point start = high_resolution_clock::now();
 	// sort data on the device (846M keys per second on GeForce GTX 480)
-	thrust::sort(thrust::host, d_vec.begin(), d_vec.end());
+	thrust::sort(d_vec.begin(), d_vec.end());
 	high_resolution_clock::time_point stop = high_resolution_clock::now();
 
 	// transfer data back to host
 	thrust::copy(d_vec.begin(), d_vec.end(), host_int_Parralel.begin());
 
-	auto durationParralel = duration_cast <microseconds> (stop - start).count();
-	cout << "Time: " << durationParralel << " microseconds" << endl;
+	auto durationParralel = duration_cast <milliseconds> (stop - start).count();
+	cout << "Time: " << durationParralel << " milliseconds" << endl;
 
 
-//
-//	cout << "Serial Radix sort Thrust" << endl;
-//
-//	thrust::host_vector<unsigned int> host_int_Serial(N);
-//	std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
-//
-//	cout << "Serial size: " << host_int_Serial.size() << endl;
-//
-//	//thrust::device_vector<unsigned long int> d_vec_S;
-//	unsigned int* da = host_int_Serial.data();
-//	int n = sizeof(host_int_Serial) / sizeof(host_int_Serial[0]);
-//	high_resolution_clock::time_point startS = high_resolution_clock::now();
-//	// sort data on the device (846M keys per second on GeForce GTX 480)
-//	serialRadixSort(da, n);
-//	high_resolution_clock::time_point stopS = high_resolution_clock::now();
-//	
-//	auto durationS = duration_cast <microseconds> (stopS - startS).count();
-//	cout << "Time: " << durationS << "microseconds" << endl;
-//	
-//	 //sort data on the device (846M keys per second on GeForce GTX 480)
-//	//thrust::sort(thrust::host, d_vec_S.begin(), d_vec_S.end());
-//	
-//	
-//	 //transfer data back to host
-//	//thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Serial.begin());
-////	auto durationSerial = duration_cast <milliseconds> (stopS - startS).count();
-//	for (int i = 0; i < n - 1; i++) {
-//		if (da[i] > da[i + 1]) {
-//			printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, da[i], i + 1, da[i + 1]);
-//			return 1;
-//		}
-//	}
+
+	cout << "Serial Radix sort Thrust" << endl;
+
+	thrust::host_vector<unsigned int> host_int_Serial(N);
+	std::generate(host_int_Serial.begin(), host_int_Serial.end(), rand);
+
+	cout << "Serial size: " << host_int_Serial.size() << endl;
+
+	//thrust::device_vector<unsigned long int> d_vec_S;
+	unsigned int* da = host_int_Serial.data();
+	high_resolution_clock::time_point startS = high_resolution_clock::now();
+	// sort data on the device (846M keys per second on GeForce GTX 480)
+	serialRadixSort(da, N);
+	high_resolution_clock::time_point stopS = high_resolution_clock::now();
+	
+	auto durationS = duration_cast <milliseconds> (stopS - startS).count();
+	cout << "Time: " << durationS << " milliseconds" << endl;
+	
+	 //sort data on the device (846M keys per second on GeForce GTX 480)
+	//thrust::sort(thrust::host, d_vec_S.begin(), d_vec_S.end());
+	
+	
+	 //transfer data back to host
+	//thrust::copy(d_vec_S.begin(), d_vec_S.end(), host_int_Serial.begin());
+//	auto durationSerial = duration_cast <milliseconds> (stopS - startS).count();
+	/*for (int i = 0; i < N; i++) {
+		if (da[i] > da[i + 1]) {
+			printf("sort error at, hdata[%d] = %d, hdata[%d] = %d\n", i, da[i], i + 1, da[i + 1]);
+			return 1;
+		}
+	}*/
 
 
 
